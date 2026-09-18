@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Landing Page SEAS 2026
 
-## Getting Started
+Este é o repositório do site oficial da Semana da Escrita Acadêmica de Sobral (SEAS), desenvolvido com Next.js, Tailwind CSS e Keystatic para o gerenciamento de conteúdo.
 
-First, run the development server:
+## Organização do Projeto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+A estrutura principal funciona da seguinte maneira:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `src/app/` e `src/components/`: Contêm a lógica das páginas e os componentes visuais do site.
+- `src/content/`: Guarda todos os dados dinâmicos em arquivos JSON. É aqui que ficam salvos os textos e configurações gerados pelo painel administrativo.
+- `public/`: Armazena os arquivos estáticos, contendo as pastas `assets` (modelo 3D do mapa), `images` (fotos de palestrantes e produtos) e `ui` (logos do evento).
+- `keystatic.config.ts`: Arquivo raiz que configura os campos do painel administrativo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Como rodar o projeto localmente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para testar o site no seu computador e visualizar alterações antes de colocar no ar:
 
-## Learn More
+1. Abra o terminal na pasta do projeto.
+2. Instale as dependências:
+   ```bash
+   pnpm install
+   ```
+3. Inicie o servidor:
+   ```bash
+   pnpm dev
+   ```
+4. Acesse `http://localhost:3000` no seu navegador.
 
-To learn more about Next.js, take a look at the following resources:
+## Como editar o conteúdo do site (Painel Keystatic)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Você não precisa mexer no código para atualizar o site. Toda a edição de textos, links e imagens é feita por uma interface visual local.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Com o site rodando no terminal, acesse `http://localhost:3000/keystatic`.
+2. Você verá o painel de controle com duas categorias:
+   - **Collections (Listas):** Para gerenciar Palestrantes, Cronograma e itens da Lojinha.
+   - **Singletons (Únicos):** Para gerenciar os dados fixos, como link de Inscrição, número do WhatsApp e os detalhes gerais da Loja.
+3. Altere o que precisar e clique em Salvar (Save).
+4. Verifique no `http://localhost:3000` se a alteração ficou do jeito que queria.
+5. Faça o commit dos arquivos alterados no GitHub e o site oficial será atualizado.
 
-## Deploy on Vercel
+### Exemplo Prático: Adicionando uma nova Atividade no Cronograma
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Abra o painel (`http://localhost:3000/keystatic`).
+2. Clique na aba **Cronograma** e depois em **Add new** (Adicionar novo).
+3. Preencha os dados:
+   - **ID:** `minicurso-latex` (sempre minúsculo e sem espaço)
+   - **Título:** Minicurso de LaTeX
+   - **Tipo:** Oficina
+   - **Data:** Selecione o dia
+   - **Horário:** 14:00 às 16:00
+   - **Local:** Laboratório de Simulações Numéricas
+4. Clique em **Create** e depois em **Save**.
+5. Resultado: O sistema criará um arquivo JSON automaticamente e a atividade aparecerá listada no site no dia correspondente e já vinculada ao mapa 3D.
