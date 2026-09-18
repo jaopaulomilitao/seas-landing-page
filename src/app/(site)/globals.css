@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* é ativado o modo escuro por classe */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* são definidas as fontes principais */
+  --font-sans: var(--font-jakarta), sans-serif;
+  --font-display: var(--font-space), sans-serif;
+
+  /* são definidas as cores da marca */
+  --color-seas-green: #22c55e;
+  --color-seas-teal: #14b8a6;
+  --color-seas-purple: #8b5cf6;
+  --color-seas-darkPurple: #4c1d95;
+  --color-seas-bgLight: #FDFDFD;
+  --color-seas-bgAltLight: #F3F4F6;
+  --color-seas-bgDark: #0F172A;
+  --color-seas-bgAltDark: #1E293B;
+  --color-seas-cardLight: #FFFFFF;
+  --color-seas-cardDark: #1e293b;
+  --color-seas-borderLight: #E5E7EB;
+  --color-seas-borderDark: #334155;
+
+  /* são definidas as sombras personalizadas */
+  --shadow-brutal: 4px 4px 0px 0px rgba(0,0,0,1);
+  --shadow-brutal-sm: 2px 2px 0px 0px rgba(0,0,0,1);
+  --shadow-brutal-dark: 4px 4px 0px 0px rgba(139, 92, 246, 0.5);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* é customizada a barra de rolagem */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* são definidos os estilos do ingresso imersivo */
+.ticket-stub {
+    border-left: 2px dashed #d1d5db;
+}
+.dark .ticket-stub {
+    border-left: 2px dashed #475569;
+}
+
+/* são definidos os utilitários geométricos bauhaus */
+.bauhaus-radius-tr { border-top-right-radius: 3rem; }
+.bauhaus-radius-bl { border-bottom-left-radius: 3rem; }
+.bauhaus-pill { border-radius: 9999px; }

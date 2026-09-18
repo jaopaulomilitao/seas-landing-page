@@ -1,0 +1,19 @@
+{
+  "kit1Name": "Kit Básico",
+  "kit1Price": 15,
+  "kit1Image": "/images/store/kit1Image.png",
+  "kit1Items": [
+    "1 Bottom",
+    "2 Adesivos"
+  ],
+  "kit2Name": "Kit Apoiador",
+  "kit2Price": 25,
+  "kit2Image": "/images/store/kit2Image.png",
+  "kit2Items": [
+    "2 Bottoms",
+    "4 Adesivos",
+    "1 Agendinha"
+  ],
+  "bottonPrice": 4,
+  "adesivoPrice": 3
+}
