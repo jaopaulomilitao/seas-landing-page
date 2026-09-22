@@ -1,12 +1,11 @@
 // keystatic.config.ts
 import { config, fields, collection, singleton } from '@keystatic/core';
 
-// verifica-se se o ambiente possui as credenciais do github para ativar o storage remoto.
-const hasGitHubKeys = Boolean(process.env.KEYSTATIC_GITHUB_CLIENT_ID);
-const useGitHubStorage = process.env.NODE_ENV === 'production' && hasGitHubKeys;
+// é verificado se o ambiente atual é o de produção.
+const isProduction = process.env.NODE_ENV === 'production';
 
 export default config({
-  storage: useGitHubStorage 
+  storage: isProduction 
     ? { kind: 'github', repo: 'jaopaulomilitao/seas-landing-page' } 
     : { kind: 'local' },
     
