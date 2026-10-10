@@ -1,5 +1,5 @@
 {
-  "kit1Name": "Kit Básicozinho",
+  "kit1Name": "Kit Básico",
   "kit1Price": 15,
   "kit1Image": "/images/store/kit1Image.png",
   "kit1Items": [
@@ -15,5 +15,5 @@
     "1 Agendinha"
   ],
   "bottonPrice": 4,
-  "adesivoPrice": 3
+  "adesivoPrice": 150
 }
