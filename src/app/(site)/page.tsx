@@ -11,6 +11,7 @@ export default async function Page() {
   const rawSpeakers = await reader.collections.speakers.all();
   const rawSchedule = await reader.collections.schedule.all();
   const rawBottons = await reader.collections.bottons.all();
+  const rawSupporters = await reader.collections.supporters.all();
   const rawStore = await reader.singletons.store.read();
   const rawSettings = await reader.singletons.settings.read();
 
@@ -37,6 +38,11 @@ export default async function Page() {
     image: b.entry.image,
   }));
 
+  const supporters = rawSupporters.map(s => ({
+    name: s.entry.name,
+    logo: s.entry.logo,
+  }));
+
   // é estabelecido um fallback de segurança para a loja
   const store = rawStore || {
     kit1Name: 'Kit Básico',
@@ -58,5 +64,5 @@ export default async function Page() {
     googleFormsLink: '#',
   };
 
-  return <LandingPage speakers={speakers} schedule={schedule} bottons={bottons} store={store as any} settings={settings as any} />;
+  return <LandingPage speakers={speakers} schedule={schedule} bottons={bottons} supporters={supporters} store={store as any} settings={settings as any} />;
 }

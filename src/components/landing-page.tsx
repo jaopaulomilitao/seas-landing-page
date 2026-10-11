@@ -23,6 +23,7 @@ import {
   HiChevronRight,
   HiArrowRight,
   HiAdjustments,
+  HiQuestionMarkCircle,
 } from "react-icons/hi";
 import { FaWhatsapp } from "react-icons/fa6";
 import { BsBoxSeam, BsCashCoin, BsImage } from "react-icons/bs";
@@ -52,6 +53,11 @@ interface BottonData {
   image: string | null;
 }
 
+interface SupporterData {
+  name: string;
+  logo: string | null;
+}
+
 interface StoreData {
   kit1Name: string;
   kit1Price: number;
@@ -75,9 +81,61 @@ interface LandingPageProps {
   speakers: SpeakerData[];
   schedule: ScheduleData[];
   bottons: BottonData[];
+  supporters: SupporterData[];
   store: StoreData;
   settings: SettingsData;
 }
+
+// organization logos shown in the "realização e organização" group
+const organizationLogos = [
+  { src: "/images/organização/logo-pet-detalhado-escuro-titulo.svg", alt: "Logo PET", width: 200, height: 80 },
+  { src: "/images/organização/logo_eng_comp.png", alt: "Logo Engenharia de Computação", width: 140, height: 60 },
+  { src: "/images/organização/logo_ppgeec.png", alt: "Logo PPGEEC", width: 140, height: 60 },
+];
+
+// event year and timezone used to build the google calendar links
+const EVENT_YEAR = 2026;
+const EVENT_TIMEZONE = "America/Fortaleza";
+
+const monthNumbers: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
+// turns "14:40" (or "14h40") into "144000"
+const toCalendarTime = (time: string) => {
+  const match = String(time).trim().match(/^(\d{1,2})\s*[:h]?\s*(\d{2})?/i);
+  if (!match) return null;
+  return `${match[1].padStart(2, "0")}${match[2] ?? "00"}00`;
+};
+
+// builds a google calendar "create event" link from a schedule item, or null if the date/time can't be parsed
+const buildGoogleCalendarLink = (item: ScheduleData) => {
+  const [rawDay, rawMonth = ""] = String(item.date).trim().split("/");
+  const monthKey = rawMonth
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+  const day = parseInt(rawDay, 10);
+  const month = monthNumbers[monthKey];
+  const start = toCalendarTime(item.startTime);
+  const end = toCalendarTime(item.endTime);
+  if (!day || !month || !start || !end) return null;
+
+  const datePart = `${EVENT_YEAR}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
+  const typeLabel = item.type === "oficina" ? "Oficina" : "Palestra";
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `SEAS 2026 • ${item.title}`,
+    dates: `${datePart}T${start}/${datePart}T${end}`,
+    ctz: EVENT_TIMEZONE,
+    details: `${typeLabel} da I Semana da Escrita Acadêmica de Sobral (SEAS).\nMinistrante: ${item.speakerName}\nHorário: ${item.startTime} às ${item.endTime}`,
+    location: `${item.location} - UFC Campus Sobral`,
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
 
 const painPoints = [
   "Dificuldade em organizar as ideias para o TCC?",
@@ -90,6 +148,7 @@ export function LandingPage({
   speakers,
   schedule,
   bottons,
+  supporters,
   store,
   settings,
 }: LandingPageProps) {
@@ -98,6 +157,9 @@ export function LandingPage({
   const [painPointIndex, setPainPointIndex] = useState(0);
   const [painPointOpacity, setPainPointOpacity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // controls the "como montar minha programação?" tip
+  const [isAgendaTipOpen, setIsAgendaTipOpen] = useState(false);
 
   // é gerenciado o estado do menu mobile (hambúrguer)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -406,13 +468,22 @@ export function LandingPage({
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
+          {/* mobile/tablet logo: swaps to the white-text version in dark mode */}
           <div className="flex md:hidden justify-center items-center mb-6">
             <Image
               src="/ui/logo-tipografica.svg"
               alt="Logo SEAS"
               width={160}
               height={55}
-              className="h-20 w-auto object-contain"
+              className="h-20 w-auto object-contain dark:hidden"
+              priority
+            />
+            <Image
+              src="/ui/logo-tipografica-dark.svg"
+              alt="Logo SEAS"
+              width={160}
+              height={55}
+              className="h-20 w-auto object-contain hidden dark:block"
               priority
             />
           </div>
@@ -480,95 +551,119 @@ export function LandingPage({
       {/* SEÇÃO DE LOGOS DA ORGANIZAÇÃO */}
       <section className="py-6 sm:py-8 bg-white/80 dark:bg-slate-900/60 border-y border-seas-borderLight dark:border-slate-800 backdrop-blur-sm overflow-hidden transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-400 mb-6">
-            Realização e Organização
-          </p>
+          {/* desktop: two groups side by side, split by a faint vertical line */}
+          <div className="hidden md:flex items-stretch justify-center gap-12 py-2">
+            <div className="flex flex-col items-center">
+              <p className="text-center text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-400 mb-6">
+                Realização e Organização
+              </p>
+              <div className="flex items-center justify-center gap-16 flex-1">
+                {organizationLogos.map((logo) => (
+                  <div key={logo.src} className="h-16 w-auto flex items-center justify-center">
+                    <Image
+                      src={logo.src}
+                      alt={logo.alt}
+                      width={logo.width}
+                      height={logo.height}
+                      className="h-16 w-auto object-contain grayscale opacity-75 dark:opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <div className="hidden md:flex items-center justify-center gap-20 py-2">
-            <div className="h-16 w-auto flex items-center justify-center">
-              <Image
-                src="/images/organização/logo_pet.svg"
-                alt="Logo PET"
-                width={200}
-                height={80}
-                className="h-16 w-auto object-contain grayscale opacity-75 dark:opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-              />
-            </div>
-            <div className="h-16 w-auto flex items-center justify-center">
-              <Image
-                src="/images/organização/logo_eng_comp.png"
-                alt="Logo Engenharia de Computação"
-                width={140}
-                height={60}
-                className="h-16 w-auto object-contain grayscale opacity-75 dark:opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-              />
-            </div>
-            <div className="h-16 w-auto flex items-center justify-center">
-              <Image
-                src="/images/organização/logo_ppgeec.png"
-                alt="Logo PPGEEC"
-                width={140}
-                height={60}
-                className="h-16 w-auto object-contain grayscale opacity-75 dark:opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-              />
-            </div>
+            {supporters.length > 0 && (
+              <>
+                <div className="w-px self-stretch bg-gray-400/25 dark:bg-gray-500/25" />
+                <div className="flex flex-col items-center">
+                  <p className="text-center text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-400 mb-6">
+                    Apoio
+                  </p>
+                  <div className="flex items-center justify-center gap-16 flex-1">
+                    {supporters.map((supporter) => (
+                      <div key={supporter.name} className="h-16 w-auto flex items-center justify-center">
+                        {supporter.logo ? (
+                          <Image
+                            src={supporter.logo}
+                            alt={`Logo ${supporter.name}`}
+                            width={200}
+                            height={80}
+                            className="h-16 w-auto object-contain grayscale opacity-75 dark:opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+                          />
+                        ) : (
+                          // fallback while no logo was uploaded on keystatic
+                          <span className="text-lg font-display font-bold text-gray-400">
+                            {supporter.name}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
+          {/* mobile: marquee with both groups, each label scrolls along with its logos */}
           <div className="md:hidden flex overflow-hidden relative w-full whitespace-nowrap">
             <div
-              className="flex items-center gap-12 shrink-0 py-2"
+              className="flex items-center shrink-0 py-2"
               style={{
                 display: "flex",
                 width: "max-content",
-                animation: "marquee 15s linear infinite",
+                animation: "marquee 25s linear infinite",
               }}
             >
-              <div className="flex items-center gap-12">
-                <Image
-                  src="/images/organização/logo_pet.svg"
-                  alt="Logo PET"
-                  width={100}
-                  height={40}
-                  className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
-                />
-                <Image
-                  src="/images/organização/logo_eng_comp.png"
-                  alt="Logo Engenharia de Computação"
-                  width={100}
-                  height={40}
-                  className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
-                />
-                <Image
-                  src="/images/organização/logo_ppgeec.png"
-                  alt="Logo PPGEEC"
-                  width={100}
-                  height={40}
-                  className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
-                />
-              </div>
-              <div className="flex items-center gap-12 ml-12">
-                <Image
-                  src="/images/organização/logo_pet.svg"
-                  alt=""
-                  width={100}
-                  height={40}
-                  className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
-                />
-                <Image
-                  src="/images/organização/logo_eng_comp.png"
-                  alt=""
-                  width={100}
-                  height={40}
-                  className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
-                />
-                <Image
-                  src="/images/organização/logo_ppgeec.png"
-                  alt=""
-                  width={100}
-                  height={40}
-                  className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
-                />
-              </div>
+              {/* the list is rendered twice so the loop looks seamless */}
+              {[0, 1].map((copy) => (
+                <div
+                  key={copy}
+                  className="flex items-center gap-12 pr-12"
+                  aria-hidden={copy === 1}
+                >
+                  <div className="w-px h-10 bg-gray-400/25 dark:bg-gray-500/25" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 -mr-6">
+                    Realização e Organização
+                  </span>
+                  {organizationLogos.map((logo) => (
+                    <Image
+                      key={logo.src}
+                      src={logo.src}
+                      alt={copy === 0 ? logo.alt : ""}
+                      width={100}
+                      height={40}
+                      className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
+                    />
+                  ))}
+                  {supporters.length > 0 && (
+                    <>
+                      <div className="w-px h-10 bg-gray-400/25 dark:bg-gray-500/25" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 -mr-6">
+                        Apoio
+                      </span>
+                      {supporters.map((supporter) =>
+                        supporter.logo ? (
+                          <Image
+                            key={supporter.name}
+                            src={supporter.logo}
+                            alt={copy === 0 ? `Logo ${supporter.name}` : ""}
+                            width={100}
+                            height={40}
+                            className="h-10 w-auto object-contain grayscale opacity-75 dark:opacity-60"
+                          />
+                        ) : (
+                          <span
+                            key={supporter.name}
+                            className="text-base font-display font-bold text-gray-400"
+                          >
+                            {supporter.name}
+                          </span>
+                        ),
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -688,13 +783,14 @@ export function LandingPage({
               paginatedSpeakers.map((speaker, idx) => (
                 <div key={idx} className="group">
                   <div className="bg-seas-bgAltLight dark:bg-seas-cardDark rounded-[1.5rem] p-5 text-center border border-seas-borderLight dark:border-seas-borderDark hover:border-seas-green dark:hover:border-seas-green transition-colors h-full flex flex-col">
+                    {/* grayscale only on mouse devices; touch screens can't hover, so they always see the photo in color */}
                     <img
                       src={
                         speaker.avatar ||
                         `https://placehold.co/400x400/22c55e/ffffff?text=${speaker.name.charAt(0)}`
                       }
                       alt={speaker.name}
-                      className="w-28 h-28 rounded-full mx-auto mb-5 object-cover border-4 border-white dark:border-slate-800 shadow-md grayscale group-hover:grayscale-0 transition-all"
+                      className="w-28 h-28 rounded-full mx-auto mb-5 object-cover border-4 border-white dark:border-slate-800 shadow-md pointer-fine:grayscale pointer-fine:group-hover:grayscale-0 transition-all"
                     />
                     <h4 className="text-lg font-display font-bold mb-1">
                       {speaker.name}
@@ -776,6 +872,27 @@ export function LandingPage({
             </div>
           </div>
 
+          {/* tip explaining how to build a personal agenda (click-based so it also works on touch screens) */}
+          <div className="mb-10 -mt-4">
+            <button
+              onClick={() => setIsAgendaTipOpen((prev) => !prev)}
+              aria-expanded={isAgendaTipOpen}
+              className="flex items-center gap-2 text-sm font-semibold text-seas-green hover:text-seas-teal transition-colors"
+            >
+              <HiQuestionMarkCircle className="text-lg" />
+              Como montar minha programação?
+            </button>
+            {isAgendaTipOpen && (
+              <div className="mt-3 bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-gray-300 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                Escolha as atividades que mais combinam com você e toque em{" "}
+                <strong className="text-white">Adicionar à agenda</strong> em
+                cada uma delas. O Google Agenda abre com o nome, horário, local e
+                ministrante já preenchidos, é só salvar! Assim você monta sua
+                programação antes do evento e recebe os lembretes no celular.
+              </div>
+            )}
+          </div>
+
           <div className="relative pl-6 md:pl-8">
             <div className="absolute left-[11px] md:left-[15px] top-4 bottom-10 w-px bg-white/20"></div>
 
@@ -824,6 +941,19 @@ export function LandingPage({
                               >
                                 Ver no mapa 3D <HiArrowRight />
                               </button>
+                              {(() => {
+                                const calendarLink = buildGoogleCalendarLink(item);
+                                return calendarLink ? (
+                                  <a
+                                    href={calendarLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[10px] uppercase tracking-wider font-bold text-white bg-white/10 hover:bg-seas-green hover:text-gray-900 border border-white/15 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+                                  >
+                                    <HiCalendar /> Adicionar à agenda
+                                  </a>
+                                ) : null;
+                              })()}
                             </div>
                           </div>
                         </div>

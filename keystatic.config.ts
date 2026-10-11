@@ -90,6 +90,25 @@ export default config({
         }),
       },
     }),
+    // supporters shown in the "apoio" group of the logos strip
+    supporters: collection({
+      label: 'Apoio (Logos)',
+      slugField: 'slug',
+      path: 'src/content/supporters/*',
+      format: { data: 'json' },
+      schema: {
+        slug: fields.text({
+          label: 'ID (Nome do arquivo)',
+          description: 'Use minúsculas e sem espaços. Ex: buttons-express'
+        }),
+        name: fields.text({ label: 'Nome do Apoiador' }),
+        logo: fields.image({
+          label: 'Logo do Apoiador',
+          directory: 'public/images/apoio',
+          publicPath: '/images/apoio',
+        }),
+      },
+    }),
   },
   singletons: {
     settings: singleton({
