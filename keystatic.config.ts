@@ -28,6 +28,15 @@ export default config({
           directory: 'public/images/speakers',
           publicPath: '/images/speakers',
         }),
+        // optional profile links, shown as small buttons on the speaker card
+        lattes: fields.url({
+          label: 'Currículo Lattes (opcional)',
+          description: 'Ex: http://lattes.cnpq.br/0000000000000000',
+        }),
+        linkedin: fields.url({
+          label: 'LinkedIn (opcional)',
+          description: 'Ex: https://www.linkedin.com/in/seu-perfil',
+        }),
       },
     }),
     schedule: collection({
@@ -46,6 +55,8 @@ export default config({
           options: [
             { label: 'Palestra', value: 'palestra' },
             { label: 'Oficina', value: 'oficina' },
+            { label: 'Roda de Conversa', value: 'roda-de-conversa' },
+            { label: 'Apresentação de Trabalhos', value: 'apresentacao' },
           ],
           defaultValue: 'palestra',
         }),
@@ -65,8 +76,9 @@ export default config({
           label: 'Local',
           description: 'Selecione a sala onde ocorrerá a atividade',
           options: [
-            { label: 'Laboratório de Simulações Numéricas', value: 'Laboratório de Simulações Numéricas' },
-            { label: 'Sala de Audiovisual', value: 'Sala de Audiovisual' },
+            // values must match the room titles used by the 3d map (src/components/campus-map.tsx)
+            { label: 'Laboratório de Simulações Numéricas (Bloco I)', value: 'Laboratório de Simulações Numéricas' },
+            { label: 'Sala de Audiovisual (Bloco III)', value: 'Sala de Audiovisual' },
           ],
           defaultValue: 'Sala de Audiovisual',
         }),
@@ -87,6 +99,11 @@ export default config({
           label: 'Imagem do Botton (Quadrada)',
           directory: 'public/images/bottons',
           publicPath: '/images/bottons',
+        }),
+        soldOut: fields.checkbox({
+          label: 'Esgotado',
+          description: 'Marque quando este botton acabar. O site mostrará "Esgotado" e bloqueará a reserva.',
+          defaultValue: false,
         }),
       },
     }),
@@ -137,18 +154,48 @@ export default config({
       path: 'src/content/store/config',
       format: { data: 'json' },
       schema: {
+        // prices use fields.number with step 0.01 so cents (ex: 1.50) are allowed
         kit1Name: fields.text({ label: 'Nome do Kit 1', defaultValue: 'Kit Básico' }),
-        kit1Price: fields.integer({ label: 'Preço do Kit 1', defaultValue: 15 }),
+        kit1Price: fields.number({ label: 'Preço do Kit 1 (atual / pré-venda)', step: 0.01, defaultValue: 9, validation: { isRequired: true } }),
+        kit1OriginalPrice: fields.number({
+          label: 'Preço "de" do Kit 1 (opcional)',
+          description: 'Preço cheio, mostrado riscado. Deixe vazio para não mostrar promoção.',
+          step: 0.01,
+        }),
         kit1Image: fields.image({ label: 'Imagem do Kit 1', directory: 'public/images/store', publicPath: '/images/store' }),
         kit1Items: fields.array(fields.text({ label: 'Item' }), { label: 'Itens do Kit 1', itemLabel: props => props.value }),
+        kit1BottonCount: fields.integer({
+          label: 'Bottons à escolha no Kit 1',
+          description: 'Quantos bottons a pessoa escolhe ao reservar. Use 0 para reservar direto, sem escolha.',
+          defaultValue: 2,
+          validation: { isRequired: true, min: 0 },
+        }),
+        kit1SoldOut: fields.checkbox({ label: 'Kit 1 esgotado', defaultValue: false }),
 
-        kit2Name: fields.text({ label: 'Nome do Kit 2', defaultValue: 'Kit Apoiador' }),
-        kit2Price: fields.integer({ label: 'Preço do Kit 2', defaultValue: 25 }),
+        kit2Name: fields.text({ label: 'Nome do Kit 2', defaultValue: 'Kit SEAS' }),
+        kit2Price: fields.number({ label: 'Preço do Kit 2 (atual / pré-venda)', step: 0.01, defaultValue: 19.9, validation: { isRequired: true } }),
+        kit2OriginalPrice: fields.number({
+          label: 'Preço "de" do Kit 2 (opcional)',
+          description: 'Preço cheio, mostrado riscado. Deixe vazio para não mostrar promoção.',
+          step: 0.01,
+        }),
         kit2Image: fields.image({ label: 'Imagem do Kit 2', directory: 'public/images/store', publicPath: '/images/store' }),
         kit2Items: fields.array(fields.text({ label: 'Item' }), { label: 'Itens do Kit 2', itemLabel: props => props.value }),
+        kit2BottonCount: fields.integer({
+          label: 'Bottons à escolha no Kit 2',
+          description: 'Quantos bottons a pessoa escolhe ao reservar (sem contar o botton SEAS fixo). Use 0 para reservar direto.',
+          defaultValue: 3,
+          validation: { isRequired: true, min: 0 },
+        }),
+        kit2SoldOut: fields.checkbox({ label: 'Kit 2 esgotado', defaultValue: false }),
 
-        bottonPrice: fields.integer({ label: 'Preço Unitário do Botton', defaultValue: 5 }),
-        adesivoPrice: fields.integer({ label: 'Preço Unitário do Adesivo', defaultValue: 3 }),
+        bottonPrice: fields.number({ label: 'Preço Unitário do Botton', step: 0.01, defaultValue: 4, validation: { isRequired: true } }),
+        adesivoPrice: fields.number({ label: 'Preço Unitário do Adesivo', step: 0.01, defaultValue: 1.5, validation: { isRequired: true } }),
+        adesivoSoldOut: fields.checkbox({
+          label: 'Adesivos esgotados',
+          description: 'Marque quando os adesivos acabarem. O site mostrará "Esgotado" e bloqueará a reserva.',
+          defaultValue: false,
+        }),
       },
     }),
   },

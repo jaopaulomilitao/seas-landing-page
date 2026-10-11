@@ -20,7 +20,9 @@ export default async function Page() {
     name: s.entry.name,
     role: s.entry.role,
     bio: s.entry.bio,
-    avatar: s.entry.avatar, 
+    avatar: s.entry.avatar,
+    lattes: s.entry.lattes,
+    linkedin: s.entry.linkedin,
   }));
 
   const schedule = rawSchedule.map(s => ({
@@ -36,6 +38,7 @@ export default async function Page() {
   const bottons = rawBottons.map(b => ({
     name: b.entry.name,
     image: b.entry.image,
+    soldOut: b.entry.soldOut,
   }));
 
   const supporters = rawSupporters.map(s => ({
@@ -46,15 +49,22 @@ export default async function Page() {
   // é estabelecido um fallback de segurança para a loja
   const store = rawStore || {
     kit1Name: 'Kit Básico',
-    kit1Price: 15,
+    kit1Price: 9,
+    kit1OriginalPrice: 10,
     kit1Image: null,
-    kit1Items: ['1 Botton Exclusivo', '2 Adesivos Tech/Acadêmicos'],
-    kit2Name: 'Kit Apoiador',
-    kit2Price: 25,
+    kit1Items: ['2 Bottons', '2 Adesivos'],
+    kit1BottonCount: 2,
+    kit1SoldOut: false,
+    kit2Name: 'Kit SEAS',
+    kit2Price: 19.9,
+    kit2OriginalPrice: 24.9,
     kit2Image: null,
-    kit2Items: ['2 Bottons (Escolha)', '4 Adesivos Tech/Acadêmicos', 'Bloco de Notas + Caneta'],
-    bottonPrice: 5,
-    adesivoPrice: 3,
+    kit2Items: ['1 Botton SEAS', '3 Bottons', '4 Adesivos', 'Agenda e Caneta'],
+    kit2BottonCount: 3,
+    kit2SoldOut: false,
+    bottonPrice: 4,
+    adesivoPrice: 1.5,
+    adesivoSoldOut: false,
   };
 
   // é estabelecido um fallback de segurança para as configurações gerais

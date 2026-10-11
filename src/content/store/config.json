@@ -1,19 +1,27 @@
 {
   "kit1Name": "Kit Básico",
-  "kit1Price": 15,
+  "kit1Price": 9,
+  "kit1OriginalPrice": 10,
   "kit1Image": "/images/store/kit1Image.png",
   "kit1Items": [
-    "1 Bottom",
+    "2 Bottons",
     "2 Adesivos"
   ],
-  "kit2Name": "Kit Apoiador",
-  "kit2Price": 25,
+  "kit1BottonCount": 2,
+  "kit1SoldOut": false,
+  "kit2Name": "Kit SEAS",
+  "kit2Price": 19.9,
+  "kit2OriginalPrice": 24.9,
   "kit2Image": "/images/store/kit2Image.png",
   "kit2Items": [
-    "2 Bottoms",
+    "1 Botton SEAS",
+    "3 Bottons",
     "4 Adesivos",
-    "1 Agendinha"
+    "Agenda e Caneta"
   ],
+  "kit2BottonCount": 3,
+  "kit2SoldOut": false,
   "bottonPrice": 4,
-  "adesivoPrice": 150
+  "adesivoPrice": 1.5,
+  "adesivoSoldOut": false
 }

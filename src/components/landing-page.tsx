@@ -24,8 +24,9 @@ import {
   HiArrowRight,
   HiAdjustments,
   HiQuestionMarkCircle,
+  HiAcademicCap,
 } from "react-icons/hi";
-import { FaWhatsapp } from "react-icons/fa6";
+import { FaWhatsapp, FaLinkedin } from "react-icons/fa6";
 import { BsBoxSeam, BsCashCoin, BsImage } from "react-icons/bs";
 import { BiSolidSticker } from "react-icons/bi";
 import { PiTarget } from "react-icons/pi";
@@ -36,6 +37,8 @@ interface SpeakerData {
   role: string;
   bio: string;
   avatar: string | null;
+  lattes: string | null;
+  linkedin: string | null;
 }
 
 interface ScheduleData {
@@ -51,6 +54,7 @@ interface ScheduleData {
 interface BottonData {
   name: string;
   image: string | null;
+  soldOut: boolean;
 }
 
 interface SupporterData {
@@ -61,15 +65,114 @@ interface SupporterData {
 interface StoreData {
   kit1Name: string;
   kit1Price: number;
+  kit1OriginalPrice: number | null;
   kit1Image: string | null;
   kit1Items: readonly string[];
+  kit1BottonCount: number;
+  kit1SoldOut: boolean;
   kit2Name: string;
   kit2Price: number;
+  kit2OriginalPrice: number | null;
   kit2Image: string | null;
   kit2Items: readonly string[];
+  kit2BottonCount: number;
+  kit2SoldOut: boolean;
   bottonPrice: number;
   adesivoPrice: number;
+  adesivoSoldOut: boolean;
 }
+
+// shared width for the store popups: limited on mobile, grows to fit the content on desktop
+const storeModalClass =
+  "bg-white dark:bg-seas-cardDark w-full max-w-sm md:w-auto md:min-w-md md:max-w-2xl rounded-2xl p-5 md:p-6 relative shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]";
+
+const qtyButtonClass =
+  "w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed";
+
+interface BottonRowProps {
+  botton: BottonData;
+  qty: number;
+  subtitle: string;
+  addDisabled: boolean;
+  onAdd: () => void;
+  onRemove: () => void;
+}
+
+// one botton line with image, name and +/- controls, used by both store popups
+function BottonRow({ botton, qty, subtitle, addDisabled, onAdd, onRemove }: BottonRowProps) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-4 p-3 border border-gray-200 dark:border-slate-700 rounded-xl ${botton.soldOut ? "opacity-60" : ""}`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        {botton.image ? (
+          <Image
+            src={botton.image}
+            alt={botton.name}
+            width={32}
+            height={32}
+            className={`w-8 h-8 shrink-0 rounded-full object-cover shadow-sm border border-gray-200 dark:border-slate-600 ${botton.soldOut ? "grayscale" : ""}`}
+          />
+        ) : (
+          <div className="w-8 h-8 shrink-0 rounded-full bg-seas-purple/20 text-seas-purple flex items-center justify-center">
+            <PiTarget className="text-sm" />
+          </div>
+        )}
+        <div className="min-w-0">
+          {/* truncated on mobile, full name on desktop */}
+          <div
+            className="font-bold text-xs truncate md:overflow-visible md:whitespace-nowrap"
+            title={botton.name}
+          >
+            {botton.name}
+          </div>
+          {botton.soldOut ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
+              Esgotado
+            </span>
+          ) : (
+            <div className="text-[10px] text-gray-500 dark:text-gray-400">
+              {subtitle}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <button onClick={onRemove} disabled={qty === 0} className={qtyButtonClass}>
+          <HiMinus className="text-xs" />
+        </button>
+        <span className="font-bold w-4 text-center text-sm">{qty}</span>
+        <button onClick={onAdd} disabled={addDisabled || botton.soldOut} className={qtyButtonClass}>
+          <HiPlus className="text-xs" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// formats a number as brazilian currency, ex: 1.5 -> "R$ 1,50"
+const formatPrice = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// labels and badge colors for each schedule type registered on keystatic
+const scheduleTypes: Record<string, { label: string; badge: string }> = {
+  palestra: { label: "Palestra", badge: "bg-seas-purple text-white" },
+  oficina: { label: "Oficina", badge: "bg-seas-teal text-gray-900" },
+  "roda-de-conversa": { label: "Roda de Conversa", badge: "bg-seas-green text-gray-900" },
+  apresentacao: { label: "Apresentação", badge: "bg-white text-seas-darkPurple" },
+};
+
+const getScheduleType = (type: string) =>
+  scheduleTypes[type] ?? { label: type, badge: "bg-white/20 text-white" };
+
+// building of each room, shown next to the location name
+const locationBlocks: Record<string, string> = {
+  "Laboratório de Simulações Numéricas": "Bloco I",
+  "Sala de Audiovisual": "Bloco III",
+};
+
+const getLocationLabel = (location: string) =>
+  locationBlocks[location] ? `${location} (${locationBlocks[location]})` : location;
 
 interface SettingsData {
   aboutText: string;
@@ -123,7 +226,7 @@ const buildGoogleCalendarLink = (item: ScheduleData) => {
   if (!day || !month || !start || !end) return null;
 
   const datePart = `${EVENT_YEAR}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
-  const typeLabel = item.type === "oficina" ? "Oficina" : "Palestra";
+  const typeLabel = getScheduleType(item.type).label;
 
   const params = new URLSearchParams({
     action: "TEMPLATE",
@@ -131,7 +234,7 @@ const buildGoogleCalendarLink = (item: ScheduleData) => {
     dates: `${datePart}T${start}/${datePart}T${end}`,
     ctz: EVENT_TIMEZONE,
     details: `${typeLabel} da I Semana da Escrita Acadêmica de Sobral (SEAS).\nMinistrante: ${item.speakerName}\nHorário: ${item.startTime} às ${item.endTime}`,
-    location: `${item.location} - UFC Campus Sobral`,
+    location: `${getLocationLabel(item.location)} - UFC Campus Sobral`,
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -213,11 +316,61 @@ export function LandingPage({
 
   const openWhatsApp = (itemName: string, price: number) => {
     const phone = settings?.whatsappNumber || "5588999999999";
-    const msg = `Olá! Gostaria de reservar o *${itemName}* (R$ ${price},00) da SEAS. Como realizo o pagamento? Sei que a retirada será presencial no dia do evento!`;
+    const msg = `Olá! Gostaria de reservar o *${itemName}* (${formatPrice(price)}) da SEAS. Como realizo o pagamento? Sei que a retirada será presencial no dia do evento!`;
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
       "_blank",
     );
+  };
+
+  // kit reservation popup: which kit is open and the bottons chosen for it
+  const [selectedKit, setSelectedKit] = useState<1 | 2 | null>(null);
+  const [kitBottonQty, setKitBottonQty] = useState<Record<string, number>>({});
+
+  const kitOptions = {
+    1: { name: store.kit1Name, price: store.kit1Price, bottonCount: store.kit1BottonCount },
+    2: { name: store.kit2Name, price: store.kit2Price, bottonCount: store.kit2BottonCount },
+  };
+  const activeKit = selectedKit ? kitOptions[selectedKit] : null;
+  const kitBottonsChosen = Object.values(kitBottonQty).reduce((acc, val) => acc + val, 0);
+
+  // opens the botton picker, or goes straight to whatsapp when the kit has no bottons to choose
+  const reserveKit = (kit: 1 | 2) => {
+    if (kitOptions[kit].bottonCount > 0) {
+      setKitBottonQty({});
+      setSelectedKit(kit);
+    } else {
+      openWhatsApp(kitOptions[kit].name, kitOptions[kit].price);
+    }
+  };
+
+  const updateKitBottonQty = (bottonName: string, change: number) => {
+    setKitBottonQty((prev) => {
+      const newQty = (prev[bottonName] || 0) + change;
+      if (newQty < 0) return prev;
+      return { ...prev, [bottonName]: newQty };
+    });
+  };
+
+  const sendKitReservation = () => {
+    if (!activeKit) return;
+    const phone = settings?.whatsappNumber || "5588999999999";
+    let msg = `Olá! Gostaria de reservar o *${activeKit.name}* (${formatPrice(activeKit.price)}) da SEAS com os bottons:\n\n`;
+
+    Object.entries(kitBottonQty).forEach(([name, qty]) => {
+      if (qty > 0) {
+        msg += `- ${qty}x ${name}\n`;
+      }
+    });
+
+    msg += `\nComo realizo o pagamento? Sei que a retirada será presencial no dia do evento!`;
+
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
+      "_blank",
+    );
+    setSelectedKit(null);
+    setKitBottonQty({});
   };
 
   // é atualizada a quantidade de um botton específico
@@ -260,7 +413,7 @@ export function LandingPage({
       msg += `- ${adesivoQty}x Adesivos Diversos\n`;
     }
 
-    msg += `\n*Total: R$ ${total.toFixed(2).replace(".", ",")}*\n\nComo realizo o pagamento da reserva? Sei que a retirada é presencial no evento!`;
+    msg += `\n*Total: ${formatPrice(total)}*\n\nComo realizo o pagamento da reserva? Sei que a retirada é presencial no evento!`;
 
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
@@ -798,9 +951,36 @@ export function LandingPage({
                     <p className="text-seas-green font-semibold text-xs mb-3">
                       {speaker.role}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs mt-auto">
-                      {speaker.bio}
-                    </p>
+                    {speaker.bio && (
+                      <p className="text-gray-600 dark:text-gray-400 text-xs">
+                        {speaker.bio}
+                      </p>
+                    )}
+                    {/* optional profile links registered on keystatic */}
+                    {(speaker.lattes || speaker.linkedin) && (
+                      <div className="flex items-center justify-center gap-2 mt-auto pt-4">
+                        {speaker.lattes && (
+                          <a
+                            href={speaker.lattes}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-seas-borderLight dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-seas-green hover:text-seas-green transition-colors"
+                          >
+                            <HiAcademicCap className="text-sm" /> Lattes
+                          </a>
+                        )}
+                        {speaker.linkedin && (
+                          <a
+                            href={speaker.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-seas-borderLight dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-seas-green hover:text-seas-green transition-colors"
+                          >
+                            <FaLinkedin className="text-sm" /> LinkedIn
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -912,12 +1092,13 @@ export function LandingPage({
                           className="bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition-colors"
                         >
                           <div className="flex flex-col sm:flex-row justify-between gap-3">
-                            <div>
+                            {/* the text column takes the remaining space so the location column keeps its width */}
+                            <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <span
-                                  className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold uppercase tracking-wider ${item.type === "palestra" ? "bg-seas-purple text-white shadow-sm" : "bg-seas-teal text-gray-900 shadow-sm"}`}
+                                  className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold uppercase tracking-wider shadow-sm ${getScheduleType(item.type).badge}`}
                                 >
-                                  {item.type}
+                                  {getScheduleType(item.type).label}
                                 </span>
                                 <span className="text-gray-300 text-xs font-medium flex items-center gap-1">
                                   <HiClock /> {item.startTime} as {item.endTime}
@@ -931,9 +1112,9 @@ export function LandingPage({
                                 {item.speakerName}
                               </p>
                             </div>
-                            <div className="sm:text-right flex flex-col sm:items-end gap-2">
-                              <span className="text-xs font-medium text-gray-300 bg-black/40 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1">
-                                <HiLocationMarker /> {item.location}
+                            <div className="sm:text-right flex flex-col items-start sm:items-end gap-2 sm:shrink-0">
+                              <span className="text-xs font-medium text-gray-300 bg-black/40 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1 sm:whitespace-nowrap">
+                                <HiLocationMarker /> {getLocationLabel(item.location)}
                               </span>
                               <button
                                 onClick={() => handleViewOnMap(item.location)}
@@ -1017,8 +1198,25 @@ export function LandingPage({
               <h3 className="text-xl font-display font-bold mb-1">
                 {store.kit1Name}
               </h3>
-              <div className="text-2xl font-bold text-seas-purple mb-5">
-                R$ {store.kit1Price}
+              {/* shows the crossed-out "de" price only when it is higher than the current one */}
+              <div className="mb-5">
+                {store.kit1OriginalPrice != null &&
+                  store.kit1OriginalPrice > store.kit1Price && (
+                    <span className="block text-xs text-gray-400 line-through">
+                      de {formatPrice(store.kit1OriginalPrice)}
+                    </span>
+                  )}
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-seas-purple">
+                    {formatPrice(store.kit1Price)}
+                  </span>
+                  {store.kit1OriginalPrice != null &&
+                    store.kit1OriginalPrice > store.kit1Price && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-seas-purple/10 text-seas-purple px-2 py-0.5 rounded-full">
+                        Pré-venda
+                      </span>
+                    )}
+                </div>
               </div>
               <ul className="space-y-2.5 mb-6 flex-grow text-gray-600 dark:text-gray-300 font-medium text-xs">
                 {store.kit1Items &&
@@ -1030,10 +1228,17 @@ export function LandingPage({
                   ))}
               </ul>
               <button
-                onClick={() => openWhatsApp(store.kit1Name, store.kit1Price)}
-                className="w-full bg-seas-bgAltLight dark:bg-slate-800 text-gray-900 dark:text-white font-bold py-2.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors border border-seas-borderLight dark:border-slate-600 flex items-center justify-center gap-2 text-sm"
+                onClick={() => reserveKit(1)}
+                disabled={store.kit1SoldOut}
+                className="w-full bg-seas-bgAltLight dark:bg-slate-800 text-gray-900 dark:text-white font-bold py-2.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors border border-seas-borderLight dark:border-slate-600 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <FaWhatsapp className="text-green-500 text-lg" /> Reservar
+                {store.kit1SoldOut ? (
+                  "Esgotado"
+                ) : (
+                  <>
+                    <FaWhatsapp className="text-green-500 text-lg" /> Reservar
+                  </>
+                )}
               </button>
             </div>
 
@@ -1062,8 +1267,24 @@ export function LandingPage({
               <h3 className="text-xl font-display font-bold mb-1">
                 {store.kit2Name}
               </h3>
-              <div className="text-2xl font-bold text-seas-green mb-5">
-                R$ {store.kit2Price}
+              <div className="mb-5">
+                {store.kit2OriginalPrice != null &&
+                  store.kit2OriginalPrice > store.kit2Price && (
+                    <span className="block text-xs text-gray-300 line-through">
+                      de {formatPrice(store.kit2OriginalPrice)}
+                    </span>
+                  )}
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-seas-green">
+                    {formatPrice(store.kit2Price)}
+                  </span>
+                  {store.kit2OriginalPrice != null &&
+                    store.kit2OriginalPrice > store.kit2Price && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-seas-green/15 text-seas-green px-2 py-0.5 rounded-full">
+                        Pré-venda
+                      </span>
+                    )}
+                </div>
               </div>
               <ul className="space-y-2.5 mb-6 flex-grow text-gray-200 font-medium text-xs">
                 {store.kit2Items &&
@@ -1075,10 +1296,17 @@ export function LandingPage({
                   ))}
               </ul>
               <button
-                onClick={() => openWhatsApp(store.kit2Name, store.kit2Price)}
-                className="w-full bg-seas-green text-gray-900 font-bold py-2.5 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2 text-sm"
+                onClick={() => reserveKit(2)}
+                disabled={store.kit2SoldOut}
+                className="w-full bg-seas-green text-gray-900 font-bold py-2.5 rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <FaWhatsapp className="text-lg" /> Reservar
+                {store.kit2SoldOut ? (
+                  "Esgotado"
+                ) : (
+                  <>
+                    <FaWhatsapp className="text-lg" /> Reservar
+                  </>
+                )}
               </button>
             </div>
 
@@ -1096,7 +1324,7 @@ export function LandingPage({
                 Monte o Seu
               </h3>
               <div className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-5">
-                A partir de R$ {store.adesivoPrice}
+                A partir de {formatPrice(Math.min(store.adesivoPrice, store.bottonPrice))}
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-6 flex-grow">
                 Quer bottons específicos ou mais adesivos para o seu notebook?
@@ -1133,7 +1361,7 @@ export function LandingPage({
       {/* MODAL DE KITS PERSONALIZADOS */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center px-4 transition-opacity duration-300">
-          <div className="bg-white dark:bg-seas-cardDark w-full max-w-sm rounded-2xl p-5 md:p-6 relative shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+          <div className={storeModalClass}>
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -1160,9 +1388,15 @@ export function LandingPage({
                   </div>
                   <div>
                     <div className="font-bold text-xs">Adesivos Diversos</div>
-                    <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                      R$ {store.adesivoPrice},00 un.
-                    </div>
+                    {store.adesivoSoldOut ? (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
+                        Esgotado
+                      </span>
+                    ) : (
+                      <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {formatPrice(store.adesivoPrice)} un.
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1177,7 +1411,8 @@ export function LandingPage({
                   </span>
                   <button
                     onClick={() => updateAdesivoQty(1)}
-                    className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center"
+                    disabled={store.adesivoSoldOut}
+                    className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <HiPlus className="text-xs" />
                   </button>
@@ -1189,56 +1424,20 @@ export function LandingPage({
               </h4>
 
               {bottons.length > 0 ? (
-                bottons.map((botton, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-slate-700 rounded-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      {botton.image ? (
-                        <Image
-                          src={botton.image}
-                          alt={botton.name}
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 rounded-full object-cover shadow-sm border border-gray-200 dark:border-slate-600"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-seas-purple/20 text-seas-purple flex items-center justify-center">
-                          <PiTarget className="text-sm" />
-                        </div>
-                      )}
-                      <div>
-                        <div
-                          className="font-bold text-xs max-w-[120px] truncate"
-                          title={botton.name}
-                        >
-                          {botton.name}
-                        </div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                          R$ {store.bottonPrice},00 un.
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => updateBottonQty(botton.name, -1)}
-                        className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center"
-                      >
-                        <HiMinus className="text-xs" />
-                      </button>
-                      <span className="font-bold w-4 text-center text-sm">
-                        {bottonQty[botton.name] || 0}
-                      </span>
-                      <button
-                        onClick={() => updateBottonQty(botton.name, 1)}
-                        className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center"
-                      >
-                        <HiPlus className="text-xs" />
-                      </button>
-                    </div>
-                  </div>
-                ))
+                // sold-out bottons are listed last and can't be added
+                [...bottons]
+                  .sort((a, b) => Number(a.soldOut) - Number(b.soldOut))
+                  .map((botton) => (
+                    <BottonRow
+                      key={botton.name}
+                      botton={botton}
+                      qty={bottonQty[botton.name] || 0}
+                      subtitle={`${formatPrice(store.bottonPrice)} un.`}
+                      addDisabled={false}
+                      onAdd={() => updateBottonQty(botton.name, 1)}
+                      onRemove={() => updateBottonQty(botton.name, -1)}
+                    />
+                  ))
               ) : (
                 <div className="text-xs text-gray-500 italic p-2">
                   Nenhum botton cadastrado na loja ainda.
@@ -1251,7 +1450,7 @@ export function LandingPage({
                 Total a pagar:
               </span>
               <span className="text-xl font-display font-bold text-seas-green">
-                R$ {calculateTotal().toFixed(2).replace(".", ",")}
+                {formatPrice(calculateTotal())}
               </span>
             </div>
 
@@ -1261,6 +1460,82 @@ export function LandingPage({
               className="w-full bg-seas-green text-gray-900 font-bold py-2.5 rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
               <FaWhatsapp className="text-lg" /> Enviar Pedido
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* kit reservation popup: pick exactly the number of bottons the kit includes */}
+      {activeKit && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center px-4 transition-opacity duration-300">
+          <div className={storeModalClass}>
+            <button
+              onClick={() => setSelectedKit(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <HiX className="text-xl" />
+            </button>
+
+            <h3 className="text-xl font-display font-bold mb-1 pr-8">
+              {activeKit.name}
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-5">
+              Escolha {activeKit.bottonCount}{" "}
+              {activeKit.bottonCount === 1 ? "botton" : "bottons"} para o seu
+              kit. Pode repetir!
+            </p>
+
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wider">
+                Bottons
+              </h4>
+              <span
+                className={`text-xs font-bold ${kitBottonsChosen === activeKit.bottonCount ? "text-seas-green" : "text-gray-500 dark:text-gray-400"}`}
+              >
+                {kitBottonsChosen} de {activeKit.bottonCount} escolhidos
+              </span>
+            </div>
+
+            <div className="space-y-3 mb-5">
+              {bottons.length > 0 ? (
+                [...bottons]
+                  .sort((a, b) => Number(a.soldOut) - Number(b.soldOut))
+                  .map((botton) => (
+                    <BottonRow
+                      key={botton.name}
+                      botton={botton}
+                      qty={kitBottonQty[botton.name] || 0}
+                      subtitle="Incluso no kit"
+                      addDisabled={kitBottonsChosen >= activeKit.bottonCount}
+                      onAdd={() => updateKitBottonQty(botton.name, 1)}
+                      onRemove={() => updateKitBottonQty(botton.name, -1)}
+                    />
+                  ))
+              ) : (
+                <div className="text-xs text-gray-500 italic p-2">
+                  Nenhum botton cadastrado na loja ainda.
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between items-end mb-5 bg-gray-50 dark:bg-slate-800 p-3 rounded-lg">
+              <span className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+                Total a pagar:
+              </span>
+              <span className="text-xl font-display font-bold text-seas-green">
+                {formatPrice(activeKit.price)}
+              </span>
+            </div>
+
+            <button
+              onClick={sendKitReservation}
+              disabled={kitBottonsChosen !== activeKit.bottonCount}
+              className="w-full bg-seas-green text-gray-900 font-bold py-2.5 rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+            >
+              <FaWhatsapp className="text-lg" />
+              {kitBottonsChosen === activeKit.bottonCount
+                ? "Reservar Kit"
+                : `Escolha mais ${activeKit.bottonCount - kitBottonsChosen}`}
             </button>
           </div>
         </div>

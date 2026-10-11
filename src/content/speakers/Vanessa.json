@@ -1,6 +1,8 @@
 {
-  "name": "Vanessa",
-  "role": "Professora / Pesquisadora",
-  "bio": "Biografia a definir.",
-  "avatar": "/images/speakers/Vanessa/avatar.jpg"
+  "name": "Vanessa Teixeira",
+  "role": "Professora Doutora (UFC Sobral)",
+  "bio": "Doutora pela Unicamp, coordenadora da Engenharia Elétrica e docente do PPGEEC, com foco em máquinas elétricas e eficiência energética.",
+  "avatar": "/images/speakers/Vanessa/avatar.jpg",
+  "lattes": "http://lattes.cnpq.br/0182190381653124",
+  "linkedin": "https://www.linkedin.com/in/vanessa-siqueira-de-castro-teixeira-986806178/"
 }
