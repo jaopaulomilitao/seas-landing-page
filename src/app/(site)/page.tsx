@@ -65,6 +65,7 @@ export default async function Page() {
     bottonPrice: 4,
     adesivoPrice: 1.5,
     adesivoSoldOut: false,
+    adesivosSampleImage: '/ui/kit_1.png',
   };
 
   // é estabelecido um fallback de segurança para as configurações gerais

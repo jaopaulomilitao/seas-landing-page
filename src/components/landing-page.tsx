@@ -21,6 +21,7 @@ import {
   HiMenu,
   HiChevronLeft,
   HiChevronRight,
+  HiChevronDown,
   HiArrowRight,
   HiAdjustments,
   HiQuestionMarkCircle,
@@ -80,6 +81,7 @@ interface StoreData {
   bottonPrice: number;
   adesivoPrice: number;
   adesivoSoldOut: boolean;
+  adesivosSampleImage?: string | null;
 }
 
 // shared width for the store popups: limited on mobile, grows to fit the content on desktop
@@ -94,12 +96,13 @@ interface BottonRowProps {
   qty: number;
   subtitle: string;
   addDisabled: boolean;
+  badge?: string;
   onAdd: () => void;
   onRemove: () => void;
 }
 
 // one botton line with image, name and +/- controls, used by both store popups
-function BottonRow({ botton, qty, subtitle, addDisabled, onAdd, onRemove }: BottonRowProps) {
+function BottonRow({ botton, qty, subtitle, addDisabled, badge, onAdd, onRemove }: BottonRowProps) {
   return (
     <div
       className={`flex items-center justify-between gap-4 p-3 border border-gray-200 dark:border-slate-700 rounded-xl ${botton.soldOut ? "opacity-60" : ""}`}
@@ -120,11 +123,18 @@ function BottonRow({ botton, qty, subtitle, addDisabled, onAdd, onRemove }: Bott
         )}
         <div className="min-w-0">
           {/* truncated on mobile, full name on desktop */}
-          <div
-            className="font-bold text-xs truncate md:overflow-visible md:whitespace-nowrap"
-            title={botton.name}
-          >
-            {botton.name}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="font-bold text-xs truncate md:overflow-visible md:whitespace-nowrap"
+              title={botton.name}
+            >
+              {botton.name}
+            </span>
+            {badge && (
+              <span className="text-[9px] font-bold uppercase tracking-wider bg-seas-purple/15 text-seas-purple dark:text-purple-300 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                {badge}
+              </span>
+            )}
           </div>
           {botton.soldOut ? (
             <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
@@ -274,6 +284,7 @@ export function LandingPage({
   // é gerenciado o estado do carrinho personalizado com base nos bottons cadastrados
   const [adesivoQty, setAdesivoQty] = useState(0);
   const [bottonQty, setBottonQty] = useState<Record<string, number>>({});
+  const [showAdesivoSample, setShowAdesivoSample] = useState(false);
 
   // é adicionado o estado para gerenciar o foco da câmera do mapa 3d
   const [activeMapLocation, setActiveMapLocation] = useState<string | null>(
@@ -316,7 +327,13 @@ export function LandingPage({
 
   const openWhatsApp = (itemName: string, price: number) => {
     const phone = settings?.whatsappNumber || "5588999999999";
-    const msg = `Olá! Gostaria de reservar o *${itemName}* (${formatPrice(price)}) da SEAS. Como realizo o pagamento? Sei que a retirada será presencial no dia do evento!`;
+    let extraDetails = "";
+    if (itemName === store.kit1Name) {
+      extraDetails = "\n\n*Itens inclusos no kit:*\n- 2x Bottons à sua escolha\n- 2x Adesivos sortidos";
+    } else if (itemName === store.kit2Name) {
+      extraDetails = "\n\n*Itens inclusos no kit:*\n- +1x Botton exclusivo SEAS (incluso)\n- 3x Bottons à sua escolha\n- 4x Adesivos sortidos\n- 1x Agenda e Caneta";
+    }
+    const msg = `Olá! Gostaria de reservar o *${itemName}* (${formatPrice(price)}) da SEAS.${extraDetails}\n\nComo realizo o pagamento? Sei que a retirada será presencial no dia do evento!`;
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
       "_blank",
@@ -355,13 +372,24 @@ export function LandingPage({
   const sendKitReservation = () => {
     if (!activeKit) return;
     const phone = settings?.whatsappNumber || "5588999999999";
-    let msg = `Olá! Gostaria de reservar o *${activeKit.name}* (${formatPrice(activeKit.price)}) da SEAS com os bottons:\n\n`;
+    let msg = `Olá! Gostaria de reservar o *${activeKit.name}* (${formatPrice(activeKit.price)}) da SEAS.\n\n`;
 
+    msg += `*Bottons escolhidos:*\n`;
     Object.entries(kitBottonQty).forEach(([name, qty]) => {
       if (qty > 0) {
         msg += `- ${qty}x ${name}\n`;
       }
     });
+
+    if (selectedKit === 1) {
+      msg += `\n*Itens inclusos no kit:*\n`;
+      msg += `• 2x Adesivos sortidos\n`;
+    } else if (selectedKit === 2) {
+      msg += `\n*Itens adicionais inclusos no kit:*\n`;
+      msg += `• +1x Botton oficial SEAS (já incluso)\n`;
+      msg += `• 4x Adesivos sortidos\n`;
+      msg += `• 1x Agenda e Caneta\n`;
+    }
 
     msg += `\nComo realizo o pagamento? Sei que a retirada será presencial no dia do evento!`;
 
@@ -420,6 +448,7 @@ export function LandingPage({
       "_blank",
     );
     setIsModalOpen(false);
+    setShowAdesivoSample(false);
     setBottonQty({});
     setAdesivoQty(0);
   };
@@ -641,8 +670,8 @@ export function LandingPage({
             />
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-seas-teal/10 text-seas-teal dark:text-seas-teal text-sm font-bold mb-6 border border-seas-teal/20 uppercase tracking-widest backdrop-blur-sm">
-            <HiCalendar className="text-base" />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-seas-teal/10 text-seas-teal dark:text-seas-teal text-[11px] sm:text-sm font-bold mb-6 border border-seas-teal/20 uppercase tracking-wider sm:tracking-widest backdrop-blur-sm whitespace-nowrap max-w-full">
+            <HiCalendar className="text-sm sm:text-base shrink-0" />
             19 a 21 de Outubro • UFC Sobral
           </div>
 
@@ -1053,22 +1082,47 @@ export function LandingPage({
           </div>
 
           {/* tip explaining how to build a personal agenda (click-based so it also works on touch screens) */}
-          <div className="mb-10 -mt-4">
+          <div className="mb-10 -mt-2">
             <button
               onClick={() => setIsAgendaTipOpen((prev) => !prev)}
               aria-expanded={isAgendaTipOpen}
-              className="flex items-center gap-2 text-sm font-semibold text-seas-green hover:text-seas-teal transition-colors"
+              className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer border ${
+                isAgendaTipOpen
+                  ? "bg-seas-green text-gray-950 border-seas-green shadow-seas-green/30"
+                  : "bg-white/10 hover:bg-white/15 text-seas-green hover:text-white border-seas-green/40 hover:border-seas-green shadow-black/20 hover:scale-[1.02]"
+              }`}
             >
-              <HiQuestionMarkCircle className="text-lg" />
-              Como montar minha programação?
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                isAgendaTipOpen ? "bg-gray-950/20 text-gray-950" : "bg-seas-green/20 text-seas-green"
+              }`}>
+                <HiQuestionMarkCircle className="text-base" />
+              </span>
+              <span>Como montar minha programação?</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline-block transition-colors ${
+                isAgendaTipOpen ? "bg-gray-950/20 text-gray-950" : "bg-seas-green/20 text-seas-green"
+              }`}>
+                Dica
+              </span>
+              <HiChevronDown
+                className={`text-base transition-transform duration-300 ${
+                  isAgendaTipOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
             {isAgendaTipOpen && (
-              <div className="mt-3 bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-gray-300 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                Escolha as atividades que mais combinam com você e toque em{" "}
-                <strong className="text-white">Adicionar à agenda</strong> em
-                cada uma delas. O Google Agenda abre com o nome, horário, local e
-                ministrante já preenchidos, é só salvar! Assim você monta sua
-                programação antes do evento e recebe os lembretes no celular.
+              <div className="mt-3 max-w-xl bg-seas-darkPurple/95 dark:bg-slate-900/95 border border-seas-green/40 rounded-2xl p-4 sm:p-5 text-xs sm:text-sm text-gray-200 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300 shadow-xl shadow-black/40 backdrop-blur-md">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-seas-green mt-1.5 shrink-0 animate-pulse"></div>
+                  <div>
+                    Escolha as atividades que mais combinam com você e toque em{" "}
+                    <span className="font-bold text-seas-green bg-seas-green/15 px-1.5 py-0.5 rounded">
+                      Adicionar à agenda
+                    </span>{" "}
+                    em cada uma delas. O Google Agenda abre com o nome, horário, local e
+                    ministrante já preenchidos, é só salvar! Assim você monta sua
+                    programação antes do evento e recebe os lembretes no celular.
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1363,7 +1417,10 @@ export function LandingPage({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center px-4 transition-opacity duration-300">
           <div className={storeModalClass}>
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setIsModalOpen(false);
+                setShowAdesivoSample(false);
+              }}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <HiX className="text-xl" />
@@ -1381,41 +1438,81 @@ export function LandingPage({
                 Adesivos
               </h4>
 
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-slate-700 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-seas-teal/20 text-seas-teal flex items-center justify-center">
-                    <BiSolidSticker className="text-sm" />
+              <div className="p-3 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-seas-teal/20 text-seas-teal flex items-center justify-center shrink-0">
+                      <BiSolidSticker className="text-sm" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs">Adesivos Diversos</div>
+                      {store.adesivoSoldOut ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
+                          Esgotado
+                        </span>
+                      ) : (
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                          {formatPrice(store.adesivoPrice)} un.
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-xs">Adesivos Diversos</div>
-                    {store.adesivoSoldOut ? (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
-                        Esgotado
-                      </span>
-                    ) : (
-                      <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                        {formatPrice(store.adesivoPrice)} un.
-                      </div>
-                    )}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      onClick={() => updateAdesivoQty(-1)}
+                      className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center"
+                    >
+                      <HiMinus className="text-xs" />
+                    </button>
+                    <span className="font-bold w-4 text-center text-sm">
+                      {adesivoQty}
+                    </span>
+                    <button
+                      onClick={() => updateAdesivoQty(1)}
+                      disabled={store.adesivoSoldOut}
+                      className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <HiPlus className="text-xs" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+
+                {/* textinho explicativo dos adesivos sortidos */}
+                <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-2.5 leading-snug">
+                  São vários adesivos sortidos, desde gatinhos fofinhos até tecnologias!
+                </p>
+
+                {/* botão dropdown "Ver amostra" */}
+                <div className="mt-2.5 pt-2 border-t border-gray-100 dark:border-slate-800">
                   <button
-                    onClick={() => updateAdesivoQty(-1)}
-                    className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center"
+                    type="button"
+                    onClick={() => setShowAdesivoSample((prev) => !prev)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-seas-teal hover:text-teal-600 dark:hover:text-teal-300 transition-colors py-1 cursor-pointer"
                   >
-                    <HiMinus className="text-xs" />
+                    <span>{showAdesivoSample ? "Ocultar amostra" : "Ver amostra"}</span>
+                    <HiChevronDown
+                      className={`text-sm transition-transform duration-300 ${
+                        showAdesivoSample ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
-                  <span className="font-bold w-4 text-center text-sm">
-                    {adesivoQty}
-                  </span>
-                  <button
-                    onClick={() => updateAdesivoQty(1)}
-                    disabled={store.adesivoSoldOut}
-                    className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <HiPlus className="text-xs" />
-                  </button>
+
+                  {/* imagem com vários adesivos na mesa com animação */}
+                  {showAdesivoSample && (
+                    <div className="mt-2.5 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 animate-in fade-in slide-in-from-top-3 duration-300 shadow-sm">
+                      <div className="relative w-full h-44 sm:h-52 bg-slate-900/10 dark:bg-black/30">
+                        <Image
+                          src={store.adesivosSampleImage || "/ui/kit_1.png"}
+                          alt="Amostra de vários adesivos sortidos na mesa"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-2 text-center text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                        Foto ilustrativa: você poderá escolher seus adesivos sortidos diretamente na mesa do evento!
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1479,11 +1576,41 @@ export function LandingPage({
             <h3 className="text-xl font-display font-bold mb-1 pr-8">
               {activeKit.name}
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 text-xs mb-5">
-              Escolha {activeKit.bottonCount}{" "}
-              {activeKit.bottonCount === 1 ? "botton" : "bottons"} para o seu
-              kit. Pode repetir!
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-4">
+              {selectedKit === 2 ? (
+                <>
+                  Escolha <strong className="text-gray-800 dark:text-gray-200">{activeKit.bottonCount} bottons adicionais</strong> para o seu kit (o Botton SEAS Oficial já está incluso). Pode repetir!
+                </>
+              ) : (
+                <>
+                  Escolha {activeKit.bottonCount}{" "}
+                  {activeKit.bottonCount === 1 ? "botton" : "bottons"} para o seu
+                  kit. Pode repetir!
+                </>
+              )}
             </p>
+
+            {selectedKit === 2 && (
+              <div className="mb-4 p-3 bg-seas-purple/10 border border-seas-purple/30 rounded-xl flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-seas-purple/40 shrink-0 bg-white dark:bg-slate-800 flex items-center justify-center p-0.5 shadow-sm">
+                  <Image
+                    src="/images/bottons/evento/image.png"
+                    alt="Botton SEAS Oficial"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <div className="text-xs">
+                  <span className="font-bold text-seas-purple dark:text-purple-300 block">
+                    +1 Botton SEAS Oficial já incluso!
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400 text-[11px] leading-tight block">
+                    Já vem garantido no seu kit. Os 3 bottons abaixo são escolhas adicionais (a mais).
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wider">
@@ -1500,17 +1627,29 @@ export function LandingPage({
               {bottons.length > 0 ? (
                 [...bottons]
                   .sort((a, b) => Number(a.soldOut) - Number(b.soldOut))
-                  .map((botton) => (
-                    <BottonRow
-                      key={botton.name}
-                      botton={botton}
-                      qty={kitBottonQty[botton.name] || 0}
-                      subtitle="Incluso no kit"
-                      addDisabled={kitBottonsChosen >= activeKit.bottonCount}
-                      onAdd={() => updateKitBottonQty(botton.name, 1)}
-                      onRemove={() => updateKitBottonQty(botton.name, -1)}
-                    />
-                  ))
+                  .map((botton) => {
+                    const isSeasBotton =
+                      botton.name.toLowerCase().includes("evento") ||
+                      botton.name.toLowerCase().includes("seas") ||
+                      Boolean(botton.image && botton.image.includes("/bottons/evento"));
+
+                    return (
+                      <BottonRow
+                        key={botton.name}
+                        botton={botton}
+                        qty={kitBottonQty[botton.name] || 0}
+                        subtitle="Incluso no kit"
+                        badge={
+                          selectedKit === 2 && isSeasBotton
+                            ? "1 já incluso no Kit"
+                            : undefined
+                        }
+                        addDisabled={kitBottonsChosen >= activeKit.bottonCount}
+                        onAdd={() => updateKitBottonQty(botton.name, 1)}
+                        onRemove={() => updateKitBottonQty(botton.name, -1)}
+                      />
+                    );
+                  })
               ) : (
                 <div className="text-xs text-gray-500 italic p-2">
                   Nenhum botton cadastrado na loja ainda.

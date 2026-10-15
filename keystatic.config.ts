@@ -196,6 +196,12 @@ export default config({
           description: 'Marque quando os adesivos acabarem. O site mostrará "Esgotado" e bloqueará a reserva.',
           defaultValue: false,
         }),
+        adesivosSampleImage: fields.image({
+          label: 'Amostra de Adesivos (Foto na mesa)',
+          description: 'Foto mostrando os adesivos na mesa para exibir no dropdown "Ver amostra".',
+          directory: 'public/images/store',
+          publicPath: '/images/store',
+        }),
       },
     }),
   },

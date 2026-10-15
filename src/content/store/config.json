@@ -23,5 +23,6 @@
   "kit2SoldOut": false,
   "bottonPrice": 4,
   "adesivoPrice": 1.5,
-  "adesivoSoldOut": false
+  "adesivoSoldOut": false,
+  "adesivosSampleImage": "/ui/kit_1.png"
 }
