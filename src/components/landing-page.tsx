@@ -1502,7 +1502,7 @@ export function LandingPage({
                     <div className="mt-2.5 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 animate-in fade-in slide-in-from-top-3 duration-300 shadow-sm">
                       <div className="relative w-full h-44 sm:h-52 bg-slate-900/10 dark:bg-black/30">
                         <Image
-                          src={store.adesivosSampleImage || "/ui/kit_1.png"}
+                          src={store.adesivosSampleImage || "/ui/adesivos-exemplo.jpeg"}
                           alt="Amostra de vários adesivos sortidos na mesa"
                           fill
                           className="object-cover"

@@ -21,32 +21,62 @@ interface CampusMapProps {
   onLocationSelect: (location: string | null) => void;
 }
 
+interface LocationInfo {
+  title: string;
+  image: string;
+  images?: string[];
+  desc: string;
+}
+
 // é configurado o mapeamento baseado exatamente nos nós do seu Outliner do Blender
-const locationNodesMapping: Record<string, { title: string; image: string; desc: string }> = {
+const locationNodesMapping: Record<string, LocationInfo> = {
   frente_campus: { 
     title: "Frente do Campus", 
-    image: "https://placehold.co/600x400/150a25/ffffff?text=Frente+do+Campus",
-    desc: "Entrada principal do campus da UFC Sobral."
+    image: "/ui/mapa3d/frente-bloco-1.jpg",
+    desc: "Entrada principal e praça de acesso ao campus da UFC Sobral."
   },
-  recepcao_bloco_3: { 
-    title: "Recepção do Bloco 3", 
-    image: "https://placehold.co/600x400/150a25/ffffff?text=Recepcao",
-    desc: ""
+  credenciamento: { 
+    title: "Credenciamento", 
+    image: "/ui/mapa3d/credenciamento.jpg",
+    desc: "Área de recepção, credenciamento dos participantes e entrega de kits."
   },
   hall_salas: { 
     title: "Hall das Salas", 
-    image: "https://placehold.co/600x400/150a25/ffffff?text=Hall",
-    desc: ""
+    image: "/ui/mapa3d/hall_engenharia.jpg",
+    desc: "Pátio e corredor central de circulação dos blocos de engenharia."
+  },
+  "corredores-lab": { 
+    title: "Corredor dos Laboratórios", 
+    image: "/ui/mapa3d/corredor-laboratorios.jpg",
+    desc: "Corredor de circulação e acesso aos laboratórios de computação e elétrica."
   },
   lab_simulacoes: { 
     title: "Laboratório de Simulações Numéricas", 
-    image: "https://placehold.co/600x400/7e22ce/ffffff?text=Lab+Simulacoes",
-    desc: "Local destinado para as oficinas práticas."
+    image: encodeURI("/ui/mapa3d/simulações-numericas-2.jpg"),
+    images: [
+      encodeURI("/ui/mapa3d/simulações-numericas-2.jpg"),
+      encodeURI("/ui/mapa3d/simulações numericas.jpg")
+    ],
+    desc: "Local destinado para as oficinas práticas e minicursos."
+  },
+  outros_labs: { 
+    title: "Laboratórios e Salas", 
+    image: encodeURI("/ui/mapa3d/simulações numericas.jpg"),
+    desc: "Salas de aula e laboratórios de pesquisa da UFC Sobral."
+  },
+  recepcao_bloco_3: { 
+    title: "Recepção do Bloco 3", 
+    image: "/ui/mapa3d/recepcao-bloco-3.jpg",
+    images: [
+      "/ui/mapa3d/recepcao-bloco-3.jpg",
+      "/ui/mapa3d/bloco-3-frente.jpg"
+    ],
+    desc: "Entrada e recepção do Bloco 3 (acesso ao Audiovisual e salas)."
   },
   lab_audiovisual: { 
     title: "Sala de Audiovisual", 
-    image: "https://placehold.co/600x400/22c55e/ffffff?text=Sala+Audiovisual",
-    desc: "Palco principal das palestras e rodas de conversa."
+    image: "/ui/mapa3d/audiovisual.jpg",
+    desc: "Palco principal das palestras e rodas de conversa (Bloco 3)."
   }
 };
 
@@ -154,8 +184,12 @@ function MapScene({ schedule, activeLocation, onLocationSelect }: CampusMapProps
                 e.stopPropagation();
                 onLocationSelect(locationData.title);
               }}
-              onPointerOver={() => document.body.style.cursor = 'pointer'}
-              onPointerOut={() => document.body.style.cursor = 'auto'}
+              onPointerOver={() => {
+                document.body.style.cursor = 'pointer';
+              }}
+              onPointerOut={() => {
+                document.body.style.cursor = 'auto';
+              }}
               visible={false} 
             >
               <bufferGeometry attach="geometry" {...mesh.geometry} />
@@ -170,8 +204,9 @@ function MapScene({ schedule, activeLocation, onLocationSelect }: CampusMapProps
 useGLTF.preload("/assets/blocos-ufc.glb");
 
 export function CampusMapSection({ schedule, activeLocation, onLocationSelect }: CampusMapProps) {
-  // estado para controlar a minimização do painel flutuante
+  // estado para controlar a minimização do painel flutuante e imagem ativa
   const [isMinimized, setIsMinimized] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   
   // são resgatados os dados do local ativo para exibir no painel 2D
   const activeData = activeLocation 
@@ -192,9 +227,12 @@ export function CampusMapSection({ schedule, activeLocation, onLocationSelect }:
     return acc;
   }, {} as Record<string, ScheduleItem[]>);
 
-  // é redefinido o estado de minimização caso o utilizador clique noutro local
+  // é redefinido o estado de minimização e foto ativa caso o utilizador mude de local
   useEffect(() => {
-    if (activeLocation) setIsMinimized(false);
+    if (activeLocation) {
+      setIsMinimized(false);
+      setActiveImageIndex(0);
+    }
   }, [activeLocation]);
 
   return (
@@ -252,10 +290,51 @@ export function CampusMapSection({ schedule, activeLocation, onLocationSelect }:
               {/* conteúdo com scroll independente (escondido se minimizado) */}
               {!isMinimized && (
                 <div className="p-5 overflow-y-auto custom-scrollbar flex-1">
-                  <img src={activeData.image} alt={activeData.title} className="w-full h-28 object-cover rounded-xl mb-4 shrink-0" />
+                  {/* Foto ou galeria de fotos do local */}
+                  {activeData.images && activeData.images.length > 1 ? (
+                    <div className="mb-4">
+                      <div className="relative rounded-xl overflow-hidden mb-2 group shadow-sm bg-black/10">
+                        <img 
+                          src={activeData.images[activeImageIndex] || activeData.image} 
+                          alt={activeData.title} 
+                          className="w-full h-36 object-cover rounded-xl transition-transform duration-300 group-hover:scale-105" 
+                        />
+                        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-[10px] text-white px-2 py-0.5 rounded-full font-medium">
+                          {activeImageIndex + 1} / {activeData.images.length}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {activeData.images.map((img, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveImageIndex(idx)}
+                            className={`flex-1 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                              activeImageIndex === idx 
+                                ? 'border-seas-purple ring-2 ring-seas-purple/30 scale-[1.02]' 
+                                : 'border-transparent opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <img 
+                      src={activeData.image} 
+                      alt={activeData.title} 
+                      className="w-full h-36 object-cover rounded-xl mb-4 shrink-0 shadow-sm" 
+                    />
+                  )}
                   
                   {Object.keys(groupedActiveEvents).length > 0 ? (
                     <div className="space-y-4">
+                      {activeData.desc && (
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 leading-relaxed">
+                          {activeData.desc}
+                        </p>
+                      )}
                       <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Eventos no Cronograma:</div>
                       {Object.entries(groupedActiveEvents).map(([date, events]) => (
                         <div key={date} className="space-y-2">
