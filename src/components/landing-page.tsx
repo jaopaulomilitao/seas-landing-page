@@ -26,6 +26,7 @@ import {
   HiAdjustments,
   HiQuestionMarkCircle,
   HiAcademicCap,
+  HiMail,
 } from "react-icons/hi";
 import { FaWhatsapp, FaLinkedin } from "react-icons/fa6";
 import { BsBoxSeam, BsCashCoin, BsImage } from "react-icons/bs";
@@ -188,6 +189,7 @@ interface SettingsData {
   aboutText: string;
   whatsappNumber: string;
   googleFormsLink: string;
+  submissionLink?: string;
 }
 
 interface LandingPageProps {
@@ -270,6 +272,7 @@ export function LandingPage({
   const [painPointIndex, setPainPointIndex] = useState(0);
   const [painPointOpacity, setPainPointOpacity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
 
   // controls the "como montar minha programação?" tip
   const [isAgendaTipOpen, setIsAgendaTipOpen] = useState(false);
@@ -311,6 +314,19 @@ export function LandingPage({
       }, 500);
     }, 4000);
     return () => clearInterval(interval);
+  }, []);
+
+  // fecha modais ao pressionar a tecla Esc
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSubmissionModalOpen(false);
+        setIsModalOpen(false);
+        setSelectedKit(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const toggleTheme = () => {
@@ -670,9 +686,26 @@ export function LandingPage({
             />
           </div>
 
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-seas-teal/10 text-seas-teal dark:text-seas-teal text-[11px] sm:text-sm font-bold mb-6 border border-seas-teal/20 uppercase tracking-wider sm:tracking-widest backdrop-blur-sm whitespace-nowrap max-w-full">
-            <HiCalendar className="text-sm sm:text-base shrink-0" />
-            19 a 21 de Outubro • UFC Sobral
+          <div className="flex flex-col flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-6 max-w-full">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-seas-teal/10 text-seas-teal dark:text-seas-teal text-[11px] sm:text-xs font-bold border border-seas-teal/20 uppercase tracking-wider sm:tracking-widest backdrop-blur-sm whitespace-nowrap">
+              <HiCalendar className="text-sm sm:text-base shrink-0" />
+              19 a 21 de Outubro • UFC Sobral
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsSubmissionModalOpen(true)}
+              className="group inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-seas-purple/10 dark:bg-seas-purple/20 text-seas-purple dark:text-purple-300 hover:bg-seas-purple/20 dark:hover:bg-seas-purple/30 text-[11px] sm:text-xs font-semibold border border-seas-purple/30 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm cursor-pointer"
+            >
+              <HiAcademicCap className="text-sm sm:text-base text-seas-purple dark:text-purple-300 shrink-0" />
+              <span>
+                Apresentação de Trabalhos:{" "}
+                <span className="font-bold text-gray-900 dark:text-white">Premiação de R$ 50</span>
+              </span>
+              <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-extrabold text-seas-purple dark:text-purple-300 underline underline-offset-2 ml-1">
+                Regras & Inscrição <HiArrowRight className="text-[10px] group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
           </div>
 
           <div className="pointer-events-none z-0 hidden md:flex justify-center items-center w-full my-6 h-[10vh] lg:h-[8vh] xl:h-[12vh] relative">
@@ -1165,6 +1198,17 @@ export function LandingPage({
                                 <HiUserCircle className="text-base" />{" "}
                                 {item.speakerName}
                               </p>
+                              {item.type === "apresentacao" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsSubmissionModalOpen(true)}
+                                  className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-seas-teal hover:text-seas-green transition-colors group cursor-pointer"
+                                >
+                                  <HiAcademicCap className="text-sm shrink-0" />
+                                  <span>Regras e submissão de trabalhos</span>
+                                  <HiArrowRight className="text-[10px] group-hover:translate-x-0.5 transition-transform" />
+                                </button>
+                              )}
                             </div>
                             <div className="sm:text-right flex flex-col items-start sm:items-end gap-2 sm:shrink-0">
                               <span className="text-xs font-medium text-gray-300 bg-black/40 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1 sm:whitespace-nowrap">
@@ -1676,6 +1720,205 @@ export function LandingPage({
                 ? "Reservar Kit"
                 : `Escolha mais ${activeKit.bottonCount - kitBottonsChosen}`}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE SUBMISSÃO E APRESENTAÇÃO DE TRABALHOS */}
+      {isSubmissionModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setIsSubmissionModalOpen(false)}
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[70] flex items-center justify-center p-3 sm:p-4 overflow-y-auto transition-all animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-seas-cardDark border border-gray-100 dark:border-slate-800 w-full max-w-2xl rounded-2xl sm:rounded-3xl p-5 sm:p-7 relative shadow-2xl text-left my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+          >
+            {/* Botão de Fechar */}
+            <button
+              type="button"
+              onClick={() => setIsSubmissionModalOpen(false)}
+              aria-label="Fechar modal"
+              className="absolute top-4 sm:top-5 right-4 sm:right-5 p-1.5 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <HiX className="text-xl sm:text-2xl" />
+            </button>
+
+            {/* Cabeçalho */}
+            <div className="pr-8 mb-5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-seas-purple/10 dark:bg-seas-purple/20 text-seas-purple dark:text-purple-300 text-[10px] sm:text-xs font-extrabold uppercase tracking-wider mb-2.5 border border-seas-purple/20">
+                <HiAcademicCap className="text-sm shrink-0" />
+                Apresentação de Trabalhos • SEAS 2026
+              </div>
+              <h3 className="text-xl sm:text-2xl font-display font-bold text-gray-900 dark:text-white leading-tight">
+                Submeta sua Pesquisa e Concorra a Premiações
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1.5 leading-relaxed">
+                Espaço dedicado para estudantes e pesquisadores apresentarem ideias, métodos e resultados — mesmo que em construção.
+              </p>
+            </div>
+
+            {/* Cards de Destaque */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+              <div className="bg-gray-50 dark:bg-slate-800/70 border border-gray-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-seas-teal mb-1.5">
+                  <HiCalendar className="text-base shrink-0" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Data & Local
+                  </span>
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-gray-900 dark:text-white">
+                    21 de Outubro • 13:30
+                  </div>
+                  <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+                    <HiLocationMarker className="shrink-0 text-xs" />
+                    <span>Sala de Audiovisual (Bloco III)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-slate-800/70 border border-gray-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-seas-teal mb-1.5">
+                  <HiClock className="text-base shrink-0" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Formato do Pitch
+                  </span>
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-gray-900 dark:text-white">
+                    6 a 8 minutos
+                  </div>
+                  <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
+                    Apresente ideia, método, importância e resultados.
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-3.5 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-seas-green dark:text-emerald-400 mb-1.5">
+                  <BsCashCoin className="text-base shrink-0" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    Premiação
+                  </span>
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
+                    R$ 50,00 cada
+                  </div>
+                  <div className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-0.5">
+                    Para os 3 trabalhos mais bem avaliados pela banca.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Aviso de Taxa e Vagas */}
+            <div className="bg-seas-teal/10 dark:bg-seas-teal/15 border border-seas-teal/30 rounded-xl p-3.5 mb-5 text-xs text-gray-700 dark:text-gray-300">
+              <span className="font-bold text-seas-teal block mb-0.5">
+                Taxa de Inscrição como Apresentador: R$ 5,00
+              </span>
+              Para realizar a inscrição como apresentador, é necessária uma contribuição simbólica no valor de R$ 5,00. Caso ocorra esgotamento de vagas, o valor será devidamente ressarcido.
+            </div>
+
+            {/* Como funciona / Informações Principais */}
+            <div className="mb-5">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2.5">
+                Informações Principais
+              </h4>
+              <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                <li className="flex items-start gap-2">
+                  <HiCheckCircle className="text-seas-green text-sm shrink-0 mt-0.5" />
+                  <span>
+                    As apresentações começarão às <strong>13:30 do dia 21 de outubro</strong> em ordem de inscrição (não se atrase!) e serão avaliadas por um pequeno grupo de pesquisadores.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <HiCheckCircle className="text-seas-green text-sm shrink-0 mt-0.5" />
+                  <span>
+                    As apresentações ocorrerão na <strong>Sala de Audiovisual, no Bloco III</strong> da UFC Campus Sobral (Mucambinho).
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <HiCheckCircle className="text-seas-green text-sm shrink-0 mt-0.5" />
+                  <span>
+                    Na sua apresentação, traga a ideia da sua pesquisa, a metodologia utilizada, a importância do tema e os resultados obtidos (ou em construção).
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <HiCheckCircle className="text-seas-green text-sm shrink-0 mt-0.5" />
+                  <span>
+                    Cada apresentação durará, no mínimo <strong>6 minutos</strong> e, no máximo, <strong>8 minutos</strong>.
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Possíveis Dúvidas (FAQ) */}
+            <div className="mb-6 pt-4 border-t border-gray-100 dark:border-slate-800">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3">
+                Dúvidas Frequentes
+              </h4>
+              <div className="space-y-2.5">
+                <div className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-200 dark:border-slate-700/60">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white mb-1">
+                    <HiQuestionMarkCircle className="text-seas-purple dark:text-purple-400 text-sm shrink-0" />
+                    <span>Preciso ter publicação para apresentar?</span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-400 pl-5 leading-relaxed">
+                    Não! O momento é destinado para todo tipo de trabalho cujo resultado vá ser um artigo ou texto científico, mesmo que ainda não tenha sido publicado.
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-200 dark:border-slate-700/60">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white mb-1">
+                    <HiQuestionMarkCircle className="text-seas-purple dark:text-purple-400 text-sm shrink-0" />
+                    <span>Preciso ter uma pesquisa concluída?</span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-400 pl-5 leading-relaxed">
+                    Não! Pesquisas em andamento também podem ser apresentadas! Basta ter algum material feito ou resultado prévio.
+                  </p>
+                </div>
+              </div>
+
+              {/* Dúvidas extras / Contato */}
+              <div className="mt-3.5 flex items-center gap-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                <HiMail className="text-sm shrink-0 text-seas-teal" />
+                <span>
+                  Dúvidas não respondidas? Envie para{" "}
+                  <a
+                    href="mailto:seas.organizacao@gmail.com"
+                    className="font-medium text-seas-teal hover:underline"
+                  >
+                    seas.organizacao@gmail.com
+                  </a>
+                </span>
+              </div>
+            </div>
+
+            {/* Ações / Botões */}
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-gray-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsSubmissionModalOpen(false)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-center cursor-pointer"
+              >
+                Fechar
+              </button>
+              <a
+                href={
+                  "https://forms.gle/HfpV2V8YufY7Tt1r5"
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-seas-green text-gray-900 font-bold text-xs sm:text-sm shadow-md hover:bg-opacity-90 transition-all hover:scale-[1.01] active:scale-[0.99] text-center"
+              >
+                <span>Inscrever Meu Trabalho</span>
+                <HiArrowRight className="text-xs shrink-0" />
+              </a>
+            </div>
           </div>
         </div>
       )}

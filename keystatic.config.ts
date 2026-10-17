@@ -147,6 +147,11 @@ export default config({
           label: 'Link do Google Forms (Inscrições)', 
           defaultValue: '#'
         }),
+        submissionLink: fields.text({ 
+          label: 'Link de Submissão de Trabalhos', 
+          description: 'Link do formulário para envio de trabalhos a serem apresentados',
+          defaultValue: 'https://www.even3.com.br/i-semana-da-escrita-academica-de-sobral-seas-790216/'
+        }),
       },
     }),
     store: singleton({
